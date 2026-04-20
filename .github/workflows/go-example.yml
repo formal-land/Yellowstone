@@ -1,0 +1,38 @@
+name: Go example
+
+on:
+  push:
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-example.yml'
+  pull_request:
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-example.yml'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go/example
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build
+        run: go build ./...
+
+      - name: Run and verify output
+        run: |
+          got=$(go run .)
+          expected="20"
+          echo "got: $got"
+          if [ "$got" != "$expected" ]; then
+            echo "::error::unexpected output: got '$got', want '$expected'"
+            exit 1
+          fi
