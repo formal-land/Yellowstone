@@ -14,5 +14,6 @@ coverage.*
 go.work
 go.work.sum
 
-# Module-local binary (built by `go build` in go/example)
+# Module-local binaries (built by `go build` in each module)
 /example/example
+/tools/erase/erase

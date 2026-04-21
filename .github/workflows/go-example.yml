@@ -14,9 +14,6 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: go/example
     steps:
       - uses: actions/checkout@v4
 
@@ -24,15 +21,50 @@ jobs:
         with:
           go-version: '1.26'
 
-      - name: Build
-        run: go build ./...
+      - name: Build all modules
+        run: |
+          (cd go/yellowstone && go build ./...)
+          (cd go/tools/erase && go build ./...)
+          (cd go/example     && go build ./...)
 
-      - name: Run and verify output
+      - name: Run and verify output (monitor off)
+        working-directory: go/example
         run: |
           got=$(go run .)
           expected="20"
           echo "got: $got"
           if [ "$got" != "$expected" ]; then
             echo "::error::unexpected output: got '$got', want '$expected'"
+            exit 1
+          fi
+
+      - name: Run with monitor on (stdout still '20', traces on stderr)
+        working-directory: go/example
+        env:
+          YELLOWSTONE_MONITOR: "1"
+        run: |
+          got=$(go run . 2>/dev/null)
+          expected="20"
+          echo "got: $got"
+          if [ "$got" != "$expected" ]; then
+            echo "::error::monitor on changed stdout: got '$got', want '$expected'"
+            exit 1
+          fi
+
+      - name: Erase monitoring, rebuild, and verify output
+        run: |
+          erase_bin="$RUNNER_TEMP/erase"
+          (cd go/tools/erase && go build -o "$erase_bin" .)
+          erased="$RUNNER_TEMP/erased"
+          rm -rf "$erased"
+          mkdir -p "$erased"
+          "$erase_bin" -src go/example -out "$erased"
+          pushd "$erased" >/dev/null
+          got=$(go run .)
+          popd >/dev/null
+          expected="20"
+          echo "got (from erased tree): $got"
+          if [ "$got" != "$expected" ]; then
+            echo "::error::erased tree produced '$got', want '$expected'"
             exit 1
           fi
