@@ -1,0 +1,19 @@
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries and coverage
+*.test
+*.out
+coverage.*
+
+# Go workspace
+go.work
+go.work.sum
+
+# Module-local binaries (built by `go build` in each module)
+/example/example
+/tools/erase/erase
